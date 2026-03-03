@@ -66,7 +66,7 @@ export default function RaceConditionAnimation() {
       } else {
         setIsPlaying(false)
       }
-    }, 2500)
+    }, 3500)
 
     return () => clearTimeout(timer)
   }, [isPlaying, step])
