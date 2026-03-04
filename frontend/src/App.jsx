@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
 import Header from './components/Header'
-import HomePage from './components/HomePage'
 import RaceConditionAnimation from './components/RaceConditionAnimation'
-import EventCard from './components/EventCard'
 import BookingDemo from './components/BookingDemo'
 
 const defaultEvent = {
@@ -15,7 +13,7 @@ const defaultEvent = {
 }
 
 function App() {
-  const [page, setPage] = useState('home') // 'home', 'demo', or 'learn'
+  const [page, setPage] = useState('demo') // 'demo' or 'learn'
   const [selectedEvent] = useState(defaultEvent)
 
   return (
@@ -23,23 +21,9 @@ function App() {
       <Header onNavigate={setPage} currentPage={page} />
       
       <main className="container mx-auto px-4 py-8 md:py-12">
-        {page === 'home' && (
-          <HomePage onNavigate={setPage} />
-        )}
-
         {page === 'demo' && selectedEvent && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-              {/* Event Details - Compact */}
-              <div className="xl:col-span-1">
-                <EventCard event={selectedEvent} />
-              </div>
-
-              {/* Booking Demo - Main */}
-              <div className="xl:col-span-3">
-                <BookingDemo event={selectedEvent} />
-              </div>
-            </div>
+          <div className="max-w-4xl mx-auto">
+            <BookingDemo event={selectedEvent} />
           </div>
         )}
 
