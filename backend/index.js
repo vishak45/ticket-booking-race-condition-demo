@@ -13,6 +13,8 @@ app.get("/", (req, res) => {
     res.send("Race condition demonstration backend");
 })
 
+app.use('/test-race-condition',async (req, res) => {});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
