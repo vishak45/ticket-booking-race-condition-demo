@@ -17,26 +17,23 @@ app.get("/", (req, res) => {
     res.send("Race condition demonstration backend");
 })
 
-// ============== VULNERABLE BOOKING (Race Condition) ==============
-// Uses read-then-write pattern - vulnerable to race conditions
+
 app.post('/api/book/vulnerable', async (req, res) => {
     try {
-        const { eventId, userId } = req.body;
+        const { eventId } = req.body;
         
-        // Step 1: READ - Find an available seat
+
         const seat = await Seat.findOne({ eventId, isBooked: false });
         
         if (!seat) {
             return res.status(400).json({ success: false, error: 'No seats available' });
         }
         
-        // Simulate processing delay to increase race condition window
+
         await new Promise(resolve => setTimeout(resolve, 50));
         
-        // Step 2: WRITE - Book the seat (RACE CONDITION HERE!)
-        // Another request could have booked this seat between read and write
+
         seat.isBooked = true;
-        seat.bookedBy = userId || null;
         seat.bookedAt = new Date();
         await seat.save();
         
@@ -52,20 +49,16 @@ app.post('/api/book/vulnerable', async (req, res) => {
     }
 });
 
-// ============== SECURE BOOKING (Atomic Operation) ==============
-// Uses findOneAndUpdate - atomic, prevents race conditions
 app.post('/api/book/secure', async (req, res) => {
     try {
-        const { eventId, userId } = req.body;
+        const { eventId } = req.body;
         
-        // Atomic operation - finds AND updates in single operation
-        // No race window possible
+ 
         const seat = await Seat.findOneAndUpdate(
             { eventId, isBooked: false },
             { 
                 $set: { 
                     isBooked: true, 
-                    bookedBy: userId || null,
                     bookedAt: new Date()
                 } 
             },
@@ -88,7 +81,7 @@ app.post('/api/book/secure', async (req, res) => {
     }
 });
 
-// ============== GET SEATS STATUS ==============
+
 app.get('/api/seats/:eventId', async (req, res) => {
     try {
         const { eventId } = req.params;
@@ -109,7 +102,7 @@ app.get('/api/seats/:eventId', async (req, res) => {
     }
 });
 
-// ============== RESET SEATS ==============
+
 app.post('/api/reset/:eventId', async (req, res) => {
     try {
         const { eventId } = req.params;
@@ -127,19 +120,19 @@ app.post('/api/reset/:eventId', async (req, res) => {
     }
 });
 
-// ============== INITIALIZE EVENT WITH SEATS ==============
+
 app.post('/api/init', async (req, res) => {
     try {
         const { name, date, totalSeats } = req.body;
         
-        // Create event
+      
         const event = await Event.create({
             name: name || "Demo Event",
             date: date || new Date(),
             totalSeats: totalSeats || 10
         });
         
-        // Create seats for the event
+  
         const seatDocs = [];
         for (let i = 1; i <= (totalSeats || 10); i++) {
             seatDocs.push({
@@ -162,7 +155,7 @@ app.post('/api/init', async (req, res) => {
     }
 });
 
-// ============== GET ALL EVENTS ==============
+
 app.get('/api/events', async (req, res) => {
     try {
         const events = await Event.find().sort({ createdAt: -1 });
