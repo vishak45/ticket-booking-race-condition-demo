@@ -1,8 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Zap, RefreshCw } from 'lucide-react'
 import BookingSection from './BookingSection'
 
+const API_URL = 'http://localhost:5000'
+
 export default function BookingDemo({ event }) {
+  const [eventId, setEventId] = useState(null)
   const [vulnerableStats, setVulnerableStats] = useState({
     totalRequests: 0,
     successfulBookings: 0,
@@ -17,43 +20,116 @@ export default function BookingDemo({ event }) {
 
   const [concurrentUsers, setConcurrentUsers] = useState(5)
   const [isLoading, setIsLoading] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
 
-  const handleVulnerableBook = () => {
-    setVulnerableStats(prev => ({
-      ...prev,
-      totalRequests: prev.totalRequests + 1,
-      successfulBookings: prev.successfulBookings + 1,
-      oversold: Math.max(0, (prev.successfulBookings + 1) - event.totalTickets)
-    }))
+  const initializeEvent = useCallback(async () => {
+    setIsInitializing(true)
+    try {
+      const res = await fetch(`${API_URL}/api/init`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: event.name,
+          date: event.date,
+          totalSeats: event.totalTickets
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setEventId(data.eventId)
+      }
+    } catch (error) {
+      console.error('Failed to initialize event:', error)
+    }
+    setIsInitializing(false)
+  }, [event.name, event.date, event.totalTickets])
+
+  // Initialize event with seats on mount
+  useEffect(() => {
+    initializeEvent()
+  }, [initializeEvent])
+
+  const handleVulnerableBook = async () => {
+    if (!eventId) return
+    
+    setVulnerableStats(prev => ({ ...prev, totalRequests: prev.totalRequests + 1 }))
+    
+    try {
+      const res = await fetch(`${API_URL}/api/book/vulnerable`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId })
+      })
+      const data = await res.json()
+      
+      if (data.success) {
+        setVulnerableStats(prev => ({
+          ...prev,
+          successfulBookings: prev.successfulBookings + 1,
+          oversold: Math.max(0, (prev.successfulBookings + 1) - event.totalTickets)
+        }))
+      }
+    } catch (error) {
+      console.error('Vulnerable booking error:', error)
+    }
   }
 
-  const handleFixedBook = () => {
-    const canBook = fixedStats.successfulBookings < event.totalTickets
-    setFixedStats(prev => ({
-      ...prev,
-      totalRequests: prev.totalRequests + 1,
-      successfulBookings: canBook ? prev.successfulBookings + 1 : prev.successfulBookings,
-      failedRequests: canBook ? prev.failedRequests : prev.failedRequests + 1
-    }))
+  const handleFixedBook = async () => {
+    if (!eventId) return
+    
+    setFixedStats(prev => ({ ...prev, totalRequests: prev.totalRequests + 1 }))
+    
+    try {
+      const res = await fetch(`${API_URL}/api/book/secure`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId })
+      })
+      const data = await res.json()
+      
+      if (data.success) {
+        setFixedStats(prev => ({
+          ...prev,
+          successfulBookings: prev.successfulBookings + 1
+        }))
+      } else {
+        setFixedStats(prev => ({
+          ...prev,
+          failedRequests: prev.failedRequests + 1
+        }))
+      }
+    } catch (error) {
+      console.error('Secure booking error:', error)
+    }
   }
 
   const handleSimulateConcurrent = async () => {
+    if (!eventId) return
     setIsLoading(true)
-    // TODO: Replace with actual API calls
-    // This will send concurrent requests to both endpoints
-    await new Promise(resolve => setTimeout(resolve, 1500))
     
-    // Simulate results for now
-    for (let i = 0; i < concurrentUsers; i++) {
-      handleVulnerableBook()
-      handleFixedBook()
-    }
+    // Fire all requests concurrently (both vulnerable and secure)
+    const vulnerablePromises = Array(concurrentUsers).fill().map(() => handleVulnerableBook())
+    const securePromises = Array(concurrentUsers).fill().map(() => handleFixedBook())
+    
+    await Promise.all([...vulnerablePromises, ...securePromises])
     setIsLoading(false)
   }
 
-  const handleReset = () => {
+  const handleReset = async () => {
     setVulnerableStats({ totalRequests: 0, successfulBookings: 0, oversold: 0 })
     setFixedStats({ totalRequests: 0, successfulBookings: 0, failedRequests: 0 })
+    
+    // Create a new event to reset seats
+    await initializeEvent()
+  }
+
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <RefreshCw size={24} className="animate-spin text-slate-400" />
+        <span className="ml-2 text-slate-400">Initializing demo...</span>
+      </div>
+    )
   }
 
   return (
