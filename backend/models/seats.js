@@ -17,12 +17,6 @@ const seatSchema = new mongoose.Schema({
     default: false,
   },
 
-  bookedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    default: null,
-  },
-
   bookedAt: {
     type: Date,
     default: null,
