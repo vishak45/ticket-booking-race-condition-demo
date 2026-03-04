@@ -6,7 +6,7 @@ export default function Header({ onNavigate, currentPage }) {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <button 
-            onClick={() => onNavigate('home')}
+            onClick={() => onNavigate('demo')}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -19,20 +19,10 @@ export default function Header({ onNavigate, currentPage }) {
           </button>
           <nav className="flex items-center gap-1">
             <button
-              onClick={() => onNavigate('home')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                currentPage === 'home'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              Home
-            </button>
-            <button
               onClick={() => onNavigate('demo')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 currentPage === 'demo'
-                  ? 'bg-slate-800 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
