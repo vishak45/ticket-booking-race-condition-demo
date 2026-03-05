@@ -16,7 +16,7 @@ const eventSchema = new mongoose.Schema({
   totalSeats: {
     type: Number,
     required: true,
-    default: 10,
+    default: 100,
   },
 }, { timestamps: true });
 

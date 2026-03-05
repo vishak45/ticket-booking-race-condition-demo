@@ -53,7 +53,7 @@ const seat = await Seat.findOne({ eventId, isBooked: false });
 await new Promise(resolve => setTimeout(resolve, 50)); // Simulated delay
 
 seat.isBooked = true;
-seat.bookedBy = userId;
+seat.bookedAt = new Date();
 await seat.save();
 ```
 
@@ -74,7 +74,6 @@ const seat = await Seat.findOneAndUpdate(
   { 
     $set: { 
       isBooked: true, 
-      bookedBy: userId,
       bookedAt: new Date()
     } 
   },
@@ -179,7 +178,7 @@ When two users check availability simultaneously, both see the same seat as avai
 // SECURE: Atomic operation
 const seat = await Seat.findOneAndUpdate(
   { eventId, isBooked: false },
-  { $set: { isBooked: true, bookedBy: userId, bookedAt: new Date() } },
+  { $set: { isBooked: true, bookedAt: new Date() } },
   { new: true }
 );
 ```
@@ -244,6 +243,7 @@ await redis.del(lockKey);
 | **Queue System** | BullMQ for handling booking requests sequentially |
 | **Optimistic Locking** | Version field (`__v`) for conflict detection |
 | **Database Transactions** | MongoDB transactions for multi-document operations |
+| **User Tracking** | Add `bookedBy` field with `userId` to track who booked each seat |
 | **Authentication** | JWT-based user authentication |
 | **Input Validation** | Zod/Joi schema validation |
 | **API Rate Limiting** | express-rate-limit middleware |
