@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: 
+      context: ./backend
+    depends_on:
+      - redis
+      - db
+    ports:
+      - "5000:5000"
+    networks:
+      - myNetwork
+    container_name: backend
+
+
+
+networks:
+  myNetwork:
+    driver: bridge
