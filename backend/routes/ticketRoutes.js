@@ -1,4 +1,5 @@
 import express from "express";
+import verifyToken from "../middleware/middleWare.js";
 import {
     vulnerableReq,
     sequreTicket,
@@ -10,18 +11,18 @@ import {
 
 
 const router = express.Router();
-router.post('/api/book/vulnerable',vulnerableReq );
+router.post('/api/book/vulnerable',verifyToken,vulnerableReq );
 
-router.post('/api/book/secure',sequreTicket );
-
-
-router.get('/api/seats/:eventId',eventFinder );
+router.post('/api/book/secure',verifyToken,sequreTicket );
 
 
-router.post('/api/reset/:eventId',conCurrentUpdate);
+router.get('/api/seats/:eventId',verifyToken,eventFinder );
 
 
-router.post('/api/init',initEvent);
-router.get('/api/test',testRace); ;
+router.post('/api/reset/:eventId',verifyToken,conCurrentUpdate);
+
+
+router.post('/api/init',verifyToken,initEvent);
+router.get('/api/test',verifyToken,testRace); ;
 
 export default router;
