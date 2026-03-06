@@ -1,4 +1,67 @@
 import Seat from "../models/seats.js";
+import Event from "../models/event.js";
+import { bookingQueue } from "../redis/bookingQueue.js";
+
+const bookTicketAsync = async (req, res) => {
+    try {
+        const { eventId } = req.body;
+        const userId = req.user?.id;
+        
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'User not authenticated' });
+        }
+        
+        // Add job to queue (returns immediately)
+        const job = await bookingQueue.add(
+            { eventId, userId, Seat },
+            { 
+                attempts: 3,
+                backoff: {
+                    type: 'exponential',
+                    delay: 2000
+                },
+                removeOnComplete: true
+            }
+        );
+        
+        res.status(202).json({
+            success: true,
+            message: 'Booking request queued',
+            jobId: job.id,
+            linkedJob: `Check status with jobId: ${job.id}`
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+const checkBookingStatus = async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        const job = await bookingQueue.getJob(jobId);
+        
+        if (!job) {
+            return res.status(404).json({ success: false, error: 'Job not found' });
+        }
+        
+        const isCompleted = await job.isCompleted();
+        const isFailed = await job.isFailed();
+        const progress = job.progress();
+        
+        res.status(200).json({
+            success: true,
+            jobId,
+            status: isCompleted ? 'completed' : isFailed ? 'failed' : 'processing',
+            progress,
+            result: isCompleted ? job.returnvalue : null,
+            failedReason: isFailed ? job.failedReason : null
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
 
 const vulnerableReq=async (req, res) => {
     try {
@@ -151,4 +214,6 @@ const testRace=async (req, res) => {
 
 }
 
-module.exports={vulnerableReq,sequreTicket,eventFinder,conCurrentUpdate,initEvent,testRace}
+module.exports={vulnerableReq,sequreTicket,eventFinder,conCurrentUpdate,initEvent,testRace,bookTicketAsync,checkBookingStatus}
+
+export { vulnerableReq, sequreTicket, eventFinder, conCurrentUpdate, initEvent, testRace, bookTicketAsync, checkBookingStatus };
