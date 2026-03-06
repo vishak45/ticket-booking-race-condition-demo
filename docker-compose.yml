@@ -1,21 +1,64 @@
+version: '3.8'
+
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis-server
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - myNetwork
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  db:
+    image: mongo:latest
+    container_name: mongo-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - myNetwork
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-password}
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   backend:
     build: 
       context: ./backend
     depends_on:
-      - redis
-      - db
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     ports:
       - "5000:5000"
     networks:
       - myNetwork
     environment:
       - MONGO_URL=${MONGO_URL}
-      - REDIS_URL=${REDIS_URL}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET}
+      - PORT=5000
     container_name: backend
+    restart: on-failure
 
-
+volumes:
+  redis_data:
+  mongo_data:
 
 networks:
   myNetwork:

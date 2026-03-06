@@ -5,6 +5,8 @@ import Event from "./models/event.js";
 import mongoose from "mongoose";
 import userRoutes from "./routes/userRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
+import { initRedis } from "./redis/rateLimiter.js";
+
 const app = express();
 dotenv.config();
 
@@ -13,11 +15,10 @@ app.use(express.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());
 
 const PORT = process.env.PORT || 5000;
+
 app.get("/", (req, res) => {
-    res.send("Race condition demonstration backend");
-})
-
-
+    res.send("Race condition demonstration backend - Redis enabled");
+});
 
 app.use("/api/user", userRoutes);
 app.use("/api/ticket", ticketRoutes);
@@ -32,7 +33,10 @@ app.get('/api/events', async (req, res) => {
     }
 });
 
-
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'Server is running', timestamp: new Date() });
+});
 
 const connectDB = async () => {
     try {
@@ -43,8 +47,22 @@ const connectDB = async () => {
     }
 };
 
-connectDB();
+const startServer = async () => {
+    try {
+        // Initialize Redis
+        await initRedis();
+        console.log("Redis initialized for rate limiting");
+        
+        // Connect to MongoDB
+        await connectDB();
+        
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error);
+        process.exit(1);
+    }
+};
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+startServer();
