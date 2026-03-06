@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: 
+      context: ./backend
+    depends_on:
+      - redis
+      - db
+    ports:
+      - "5000:5000"
+    networks:
+      - myNetwork
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    container_name: backend
+
+
+
+networks:
+  myNetwork:
+    driver: bridge
