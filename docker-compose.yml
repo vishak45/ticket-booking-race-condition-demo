@@ -55,7 +55,16 @@ services:
       - PORT=5000
     container_name: backend
     restart: on-failure
-
+  realtime:
+    build: ./realtimeserver
+    container_name: realtime
+    ports:
+      -"6000:6000"
+    depends_on:
+      - redis
+      - db
+    networks:
+      - myNetwork
 volumes:
   redis_data:
   mongo_data:

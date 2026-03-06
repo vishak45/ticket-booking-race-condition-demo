@@ -215,5 +215,3 @@ const testRace=async (req, res) => {
 }
 
 module.exports={vulnerableReq,sequreTicket,eventFinder,conCurrentUpdate,initEvent,testRace,bookTicketAsync,checkBookingStatus}
-
-export { vulnerableReq, sequreTicket, eventFinder, conCurrentUpdate, initEvent, testRace, bookTicketAsync, checkBookingStatus };
