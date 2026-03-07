@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import Header from './components/Header'
 import RaceConditionAnimation from './components/RaceConditionAnimation'
 import BookingDemo from './components/BookingDemo'
+import LoginPage from './components/LoginPage'
+import RegisterPage from './components/RegisterPage'
 
 const defaultEvent = {
   id: 1,
@@ -13,32 +15,60 @@ const defaultEvent = {
 }
 
 function App() {
-  const [page, setPage] = useState('demo') // 'demo' or 'learn'
+  const [page, setPage] = useState('demo') // 'demo', 'learn', 'login', or 'register'
   const [selectedEvent] = useState(defaultEvent)
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('user')
+    return stored ? JSON.parse(stored) : null
+  })
 
   return (
     <div className="min-h-screen bg-slate-950">
-      <Header onNavigate={setPage} currentPage={page} />
+      <Header onNavigate={setPage} currentPage={page} user={user} onLogout={() => {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setUser(null)
+        setPage('demo')
+      }} />
       
       <main className="container mx-auto px-4 py-8 md:py-12">
-        {page === 'demo' && selectedEvent && (
-          <div className="max-w-4xl mx-auto">
-            <BookingDemo event={selectedEvent} />
-          </div>
+        {page === 'login' && (
+          <LoginPage onNavigate={(newPage) => {
+            setUser(JSON.parse(localStorage.getItem('user')))
+            setPage(newPage)
+          }} />
         )}
 
-        {page === 'learn' && (
+        {page === 'register' && (
+          <RegisterPage onNavigate={(newPage) => {
+            const stored = localStorage.getItem('user')
+            if (stored) setUser(JSON.parse(stored))
+            setPage(newPage)
+          }} />
+        )}
+
+        {(page === 'demo' || page === 'learn') && (
           <>
-            {/* Detailed Explanation Page */}
-            <div className="mb-6">
-              <button
-                onClick={() => setPage('demo')}
-                className="text-slate-400 hover:text-white text-sm font-medium transition-colors flex items-center gap-2"
-              >
-                ← Back to Demo
-              </button>
-            </div>
-            <RaceConditionAnimation />
+            {page === 'demo' && selectedEvent && (
+              <div className="max-w-4xl mx-auto">
+                <BookingDemo event={selectedEvent} />
+              </div>
+            )}
+
+            {page === 'learn' && (
+              <>
+                {/* Detailed Explanation Page */}
+                <div className="mb-6">
+                  <button
+                    onClick={() => setPage('demo')}
+                    className="text-slate-400 hover:text-white text-sm font-medium transition-colors flex items-center gap-2"
+                  >
+                    ← Back to Demo
+                  </button>
+                </div>
+                <RaceConditionAnimation />
+              </>
+            )}
           </>
         )}
       </main>
